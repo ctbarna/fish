@@ -1,118 +1,94 @@
 /* Author: Chris Barna (@ctbarna) */
 (function () {
-  var canvas = document.getElementById("fishtank");
+  var height = $(window).height(), width = $(window).width();
+  var paper = new Raphael(0, 0, width, height);
 
-  // Helper method to generate a normally distributed random number.
-  var randn = function (mean, variance) {
-    if (typeof(mean) === "undefined") {
-      mean = 0;
-    }
-    if (typeof(variance) === "undefined") {
-      variance = 1;
-    }
+  // Handle the page resize.
+  $(window).resize(function () {
+    height = $(window).height();
+    width = $(window).width();
 
-    var v1, v2, s;
+    $(paper.canvas).height(height);
+    $(paper.width).width(width);
+  });
 
-    do {
-      var u1 = Math.random();
-      var u2 = Math.random();
+  // Fish element.
+  var Fish = function (x, y) {
+    this.x = x;
+    this.y = y;
 
-      v1 = 2 * u1 - 1;
-      v2 = 2 * u2 - 1;
+    this.dx = Math.random() * 5;
+    this.dy = Math.random() * 5;
 
-      s = Math.pow(v1, 2) + Math.pow(v2, 2);
-    } while (s > 1);
+    this.element = paper.circle(x, y, 5);
 
-    var x = Math.sqrt(-2 * Math.log(s) / s) * v1;
-    x = mean + Math.sqrt(variance) * x;
-    return x;
-  };
+    this.motion = function () {
+      this.x = this.x + this.dx;
+      this.y = this.y + this.dy;
+      this.element.animate({cx: this.x, cy: this.y}, 1);
 
-  // Change the size of the canvas.
-  $("#fishtank").attr("height", $(window).height());
-  $("#fishtank").attr("width", $(window).width());
-
-  var height = $("#fishtank").height(),
-    width = $("#fishtank").width();
-  var fishes = [];
-
-  // Check if they have canvas.
-  if (canvas.getContext) {
-    var context = canvas.getContext('2d');
-
-    // Fish!
-    var Fish = function (x, y) {
-      this.x = x;
-      this.y = y;
-
-      this.dx = (Math.random() - 0.5) * 5;
-      this.dy = (Math.random() - 0.5) * 5;
-
-      this.draw = function () {
-        context.beginPath();
-        context.fillStyle = "#000";
-        context.arc(this.x, this.y, 5, 0, Math.PI * 2, true);
-        context.closePath();
-        context.fill();
-      };
-
-      this.move = function () {
-        this.x += this.dx + randn(0, 0.35);
-        this.y += this.dy + randn(0, 0.35);
-
+      if (this.x > width || this.x < 0) {
         if (this.x > width) {
-          this.x -= width;
+          this.x = 0;
         } else if (this.x < 0) {
-          this.x += width;
+          this.x = width;
         }
+        this.element.animate({"cx": this.x}, 0);
+      }
 
+      if (this.y > height || this.y < 0) {
         if (this.y > height) {
-          this.y -= height;
+          this.y = 0;
         } else if (this.y < 0) {
-          this.y += height;
+          this.y = height;
         }
-      };
+        this.element.animate({"cy": this.y}, 0);
+      }
 
-      this.changeVelocity = function (e) {
-        // var closeFish = [];
-        var x_sum = 0, y_sum = 0, total = 0;
-
-        for (var i = 0; i < fishes.length; i += 1) {
-          var d = Math.sqrt(Math.pow(fishes[i].x - this.x, 2)
-            + Math.pow(fishes[i].y - this.y, 2));
-
-          if (d < e && d > 0) {
-            x_sum += fishes[i].dx;
-            y_sum += fishes[i].dy;
-            total += 1;
-          }
-        }
-
-        if (total > 0) {
-          this.dx = x_sum / total;
-          this.dy = y_sum / total;
-        }
-
-      };
+      this.adjustVelocity(15);
     };
 
-    // Animate code!
-    var animate = function () {
-      context.clearRect(0, 0, width, height);
+    this.adjustVelocity = function (e) {
+      var x_sum = 0, y_sum = 0, total = 0;
 
-      for (var i = 0; i < fishes.length; i += 1) {
-        fishes[i].move();
-        fishes[i].draw();
-        fishes[i].changeVelocity(10);
+      for (var i = 0; i < fish.length; i += 1) {
+        var d = Math.sqrt(Math.pow(fish[i].x - this.x, 2)
+          + Math.pow(fish[i].y - this.y, 2));
+
+        if (d < e && d > 0) {
+          x_sum += fish[i].dx;
+          y_sum += fish[i].dy;
+          total += 1;
+        }
+      }
+
+      if (total > 0) {
+        this.dx = x_sum / total;
+        this.dy = y_sum / total;
       }
 
     };
+  };
 
-    setInterval(animate, 10);
+  var fish = [];
 
-    for (var i = 0; i < 250; i += 1) {
-      fishes.push(new Fish(Math.random() * width, Math.random() * height));
-    }
+  for (var i = 0; i < 50; i += 1) {
+    var randx = Math.random() * width;
+    var randy = Math.random() * height;
+    fish.push(new Fish(randx, randy));
   }
+
+  // Animation function.
+  var animate = function () {
+    for (var i = 0; i < fish.length; i += 1) {
+      fish[i].motion();
+      if (i === 1) {
+        console.log(fish[i].x);
+      }
+    }
+
+  }
+
+  setInterval(animate, 25);
 
 })();
