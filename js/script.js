@@ -5,14 +5,28 @@
   var paper = new Raphael(0, 0, width, height);
 
   // Tons of initial conditions.
-  var alpha = 0.9,
-    beta = 1,
-    cr = 4.5,
-    ca = 11.5,
-    lr = 30,
-    la = 75,
-    lc = 10,
-    dt = 0.05;
+  var props = {
+    alpha: 0.9,
+    beta: 1,
+    cr: 3,
+    ca: 10,
+    lr: 20,
+    la: 60,
+    lc: 4,
+    dt: 0.05
+  };
+
+  // Initialize dat.gui.
+  var gui = new dat.GUI();
+  gui.remember(props);
+  gui.add(props, "alpha", 0, 2);
+  gui.add(props, "beta", 0, 2);
+  gui.add(props, "cr", 0, 25);
+  gui.add(props, "ca", 0, 25);
+  gui.add(props, "lr", 0, 100);
+  gui.add(props, "la", 0, 100);
+  gui.add(props, "lc", 0, 25);
+  gui.add(props, "dt", 0, 1);
 
   // Handle the page resize.
   $(window).resize(function () {
@@ -37,8 +51,8 @@
     this.element = paper.circle(x, y, 5);
 
     this.motion = function () {
-      this.vx = this.vx + dt * this.ax;
-      this.vy = this.vy + dt * this.ay;
+      this.vx = this.vx + props.dt * this.ax;
+      this.vy = this.vy + props.dt * this.ay;
 
       this.x = this.x + this.vx;
       this.y = this.y + this.vy;
@@ -75,23 +89,27 @@
 
         if (d > 0) {
           this.ax = this.ax
-            + (cr * Math.exp(Math.E, -d / lr) * (-1 / (2 * lr))
+            + (props.cr * Math.exp(Math.E, -d / props.lr)
+               * (-1 / (2 * props.lr))
                * (1/d) * (2 * (this.x - fish[i].x)))
-            - (ca * Math.exp(Math.E, -d / la) * (-1 / (2 * la))
+            - (props.ca * Math.exp(Math.E, -d / props.la)
+               * (-1 / (2 * props.la))
                * (1/d) * (2 * (this.x - fish[i].x)));
 
           this.ay = this.ay
-            + (cr * Math.exp(Math.E, -d / lr) * (-1 / (2 * lr))
+            + (props.cr * Math.exp(Math.E, -d / props.lr)
+               * (-1 / (2 * props.lr))
                * (1/d) * (2 * (this.y - fish[i].y)))
-            - (ca * Math.exp(Math.E, -d / la) * (-1 / (2 * la))
+            - (props.ca * Math.exp(Math.E, -d / props.la)
+               * (-1 / (2 * props.la))
                * (1/d) * (2 * (this.y - fish[i].y)));
         }
       }
 
-      this.ax = (alpha - beta)
+      this.ax = (props.alpha - props.beta)
         * this.vx - this.ax;
 
-      this.ay = (alpha - beta)
+      this.ay = (props.alpha - props.beta)
         * this.vy - this.ay;
 
     };
