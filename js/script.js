@@ -13,12 +13,14 @@
     lr: 20,
     la: 60,
     lc: 4,
-    dt: 0.05
+    dt: 0.05,
+    play: true
   };
 
   // Initialize dat.gui.
   var gui = new dat.GUI();
   gui.remember(props);
+  gui.add(props, "play");
   gui.add(props, "alpha", 0, 2);
   gui.add(props, "beta", 0, 2);
   gui.add(props, "cr", 0, 25);
@@ -125,15 +127,16 @@
 
   // Animation function.
   var animate = function () {
-    for (var i = 0; i < fish.length; i += 1) {
-      fish[i].motion();
-      if (i === 1) {
-        console.log(fish[i].ax);
+    if (props.play === true) {
+      for (var i = 0; i < fish.length; i += 1) {
+        fish[i].motion();
+        if (i === 1) {
+          console.log(fish[i].ax);
+        }
       }
     }
-
   }
 
-  setInterval(animate, 50);
+  var animationInterval = setInterval(animate, 50);
 
 })();
