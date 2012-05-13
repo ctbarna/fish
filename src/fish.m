@@ -7,10 +7,10 @@ M=5000;
 N=50;
 P=0;
 
-alpha = .5;
-beta = 1;
-cr = 2;
-ca = .45;
+alpha = 10;
+beta = 100;
+cr = 20;
+ca = 5;
 lr = 20;
 la = 60;
 lc = 2;
