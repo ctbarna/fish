@@ -9,8 +9,8 @@
     alpha: 0.5,
     beta: 1,
     cr: 3,
-    ca: 5,
-    lr: 10,
+    ca: 3,
+    lr: 20,
     la: 50,
     lc: 4,
     dt: 0.05,
@@ -44,11 +44,11 @@
     this.x = x;
     this.y = y;
 
-    this.vx = 0; //(Math.random() * 5) - 2.5;
-    this.vy = 0; //(Math.random() * 5) - 2.5;
+    this.vx = (Math.random() * 5) - 2.5;
+    this.vy = (Math.random() * 5) - 2.5;
 
-    this.ax = 0; //Math.random() * 0.001;
-    this.ay = 0; //Math.random() * 0.001;
+    this.ax = Math.random() * 0.001;
+    this.ay = Math.random() * 0.001;
 
     this.element = paper.circle(x, y, 5);
 
@@ -83,13 +83,15 @@
 
     this.adjustVelocity = function () {
       var fx = 0, fy = 0;
+      this.ay = 0;
+      this.ax = 0;
 
 
       for (var i = 0; i < fish.length; i += 1) {
         var d = Math.sqrt(Math.pow(fish[i].x - this.x, 2)
           + Math.pow(fish[i].y - this.y, 2));
 
-        if (d > 0 && d < 2 * props.la) {
+        if (d > 0 && d < props. la) {
           this.ax = this.ax
             + (props.cr * Math.exp(Math.E, -d / props.lr)
                * (-1 / (2 * props.lr))
@@ -110,10 +112,10 @@
         }
       }
 
-      this.ax = fx * props.alpha - props.beta
+      this.ax = props.alpha - props.beta
         * this.vx - this.ax;
 
-      this.ay = fy * props.alpha - props.beta
+      this.ay = props.alpha - props.beta
         * this.vy - this.ay;
 
 
@@ -134,7 +136,7 @@
       for (var i = 0; i < fish.length; i += 1) {
         fish[i].motion();
         if (i === 1) {
-          console.log(fish[i].vy);
+          console.log(fish[i].vx);
         }
       }
     }
