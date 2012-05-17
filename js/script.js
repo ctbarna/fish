@@ -44,8 +44,8 @@
     this.x = x;
     this.y = y;
 
-    this.vx = (Math.random() * 5) - 2.5;
-    this.vy = (Math.random() * 5) - 2.5;
+    this.vx = (Math.random() * 10) - 5;
+    this.vy = (Math.random() * 10) - 5;
 
     this.ax = Math.random() * 0.001;
     this.ay = Math.random() * 0.001;
@@ -82,40 +82,40 @@
     };
 
     this.adjustVelocity = function () {
+      // Reset everything.
       var fx = 0, fy = 0;
-      this.ay = 0;
       this.ax = 0;
-
+      this.ay = 0;
 
       for (var i = 0; i < fish.length; i += 1) {
-        var d = Math.sqrt(Math.pow(fish[i].x - this.x, 2)
-          + Math.pow(fish[i].y - this.y, 2));
+        var d = Math.sqrt(Math.pow(this.x - fish[i].x, 2)
+          + Math.pow(this.y - fish[i].y, 2));
 
-        if (d > 0 && d < props. la) {
+        if (fish[i] !== this) {
           this.ax = this.ax
-            + (props.cr * Math.exp(Math.E, -d / props.lr)
+            + (props.cr * Math.pow(Math.E, -d / props.lr)
                * (-1 / (2 * props.lr))
                * (1/d) * (2 * (this.x - fish[i].x)))
-            - (props.ca * Math.exp(Math.E, -d / props.la)
+            - (props.ca * Math.pow(Math.E, -d / props.la)
                * (-1 / (2 * props.la))
                * (1/d) * (2 * (this.x - fish[i].x)));
-          fx = fx + this.vx * Math.exp(Math.E, -d / props.lc);
+          fx = fx + fish[i].vx * Math.pow(Math.E, -d / props.lc);
 
           this.ay = this.ay
-            + (props.cr * Math.exp(Math.E, -d / props.lr)
+            + (props.cr * Math.pow(Math.E, -d / props.lr)
                * (-1 / (2 * props.lr))
-               * (1) * (2 * (this.y - fish[i].y)))
-            - (props.ca * Math.exp(Math.E, -d / props.la)
+               * (1/d) * (2 * (this.y - fish[i].y)))
+            - (props.ca * Math.pow(Math.E, -d / props.la)
                * (-1 / (2 * props.la))
-               * (1) * (2 * (this.y - fish[i].y)));
-          fy = fy + this.vy * Math.exp(Math.E, -d / props.lc);
+               * (1/d) * (2 * (this.y - fish[i].y)));
+          fy = fy + fish[i].vy * Math.pow(Math.E, -d / props.lc);
         }
       }
 
-      this.ax = props.alpha - props.beta
+      this.ax = props.alpha * fx - props.beta
         * this.vx - this.ax;
 
-      this.ay = props.alpha - props.beta
+      this.ay = props.alpha * fy - props.beta
         * this.vy - this.ay;
 
 
@@ -124,7 +124,7 @@
 
   window.fish = [];
 
-  for (var i = 0; i < 25; i += 1) {
+  for (var i = 0; i < 50; i += 1) {
     var randx = Math.random() * width;
     var randy = Math.random() * height;
     fish.push(new Fish(randx, randy));
@@ -135,13 +135,14 @@
     if (props.play === true) {
       for (var i = 0; i < fish.length; i += 1) {
         fish[i].motion();
+
         if (i === 1) {
-          console.log(fish[i].vx);
+          console.log(fish[i].ax);
         }
       }
     }
   }
 
-  var animationInterval = setInterval(animate, 100);
+  var animationInterval = setInterval(animate, 10);
 
 })();
