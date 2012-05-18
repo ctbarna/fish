@@ -1,8 +1,34 @@
 /* Author: Chris Barna (@ctbarna) */
 (function () {
   var height = $(window).height(), width = $(window).width();
-  // var height = 100, width = 100;
   var paper = new Raphael(0, 0, width, height);
+  var n = 150;
+
+  // Helper method to generate a normally distributed random number.
+  var randn = function (mean, variance) {
+    if (typeof(mean) === "undefined") {
+      mean = 0;
+    }
+    if (typeof(variance) === "undefined") {
+      variance = 1;
+    }
+
+    var v1, v2, s;
+
+    do {
+      var u1 = Math.random();
+      var u2 = Math.random();
+
+      v1 = 2 * u1 - 1;
+      v2 = 2 * u2 - 1;
+
+      s = Math.pow(v1, 2) + Math.pow(v2, 2);
+    } while (s > 1);
+
+    var x = Math.sqrt(-2 * Math.log(s) / s) * v1;
+    x = mean + Math.sqrt(variance) * x;
+    return x;
+  };
 
   // Tons of initial conditions.
   var props = {
@@ -45,13 +71,19 @@
     this.x = x;
     this.y = y;
 
-    this.vx = (Math.random() * 10) - 5;
-    this.vy = (Math.random() * 10) - 5;
+    this.vx = randn();
+    this.vy = randn();
 
-    this.ax = Math.random() * 0.001;
-    this.ay = Math.random() * 0.001;
+    this.ax = randn() * 0.001;
+    this.ay = randn() * 0.001;
 
     this.element = paper.circle(x, y, 5);
+
+    this.remove = function () {
+      var index = fish.indexOf(this);
+      fish.splice(index, 1);
+      this.element.remove();
+    };
 
     this.motion = function () {
       this.vx = this.vx + props.dt * this.ax;
@@ -146,13 +178,30 @@
       this.ay = props.alpha * fy - props.beta
         * this.vy - this.ay;
 
-
     };
+
+    this.birthRate = function (probability) {
+      var u = Math.random();
+
+      if (u < probability) {
+        fish.push(new Fish(this.x, this.y));
+        console.log("Birth!");
+      }
+    }
+
+    this.deathRate = function (probability) {
+      var u = Math.random();
+
+      if (u < probability) {
+        this.remove();
+        console.log("Death!");
+      }
+    }
   };
 
   window.fish = [];
 
-  for (var i = 0; i < 100; i += 1) {
+  for (var i = 0; i < n; i += 1) {
     var randx = Math.random() * width;
     var randy = Math.random() * height;
     fish.push(new Fish(randx, randy));
@@ -161,13 +210,16 @@
   // Animation function.
   var animate = function () {
     if (props.play === true) {
+
       for (var i = 0; i < fish.length; i += 1) {
         fish[i].motion();
+        fish[i].birthRate(0.0001);
+        fish[i].deathRate(0.0001);
 
-        if (i === 1) {
-          console.log(fish[i].ax);
-        }
+        total_v += Math.sqrt(Math.pow(fish[i].vx, 2) +
+                             Math.pow(fish[i].vy, 2));
       }
+
     }
   }
 
