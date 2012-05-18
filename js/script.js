@@ -31,14 +31,14 @@
   };
 
   // Tons of initial conditions.
-  var props = {
+  var prey_props = {
     alpha: 0.5,
     beta: 1,
     cr: 25,
     ca: 15,
     lr: 30,
     la: 60,
-    lc: 10,
+    lc: 8,
     dt: 0.5,
     velocity: 1,
     play: true
@@ -46,16 +46,16 @@
 
   // Initialize dat.gui.
   var gui = new dat.GUI();
-  gui.remember(props);
-  gui.add(props, "play");
-  gui.add(props, "alpha", 0, 10);
-  gui.add(props, "beta", 0, 10);
-  gui.add(props, "cr", 0, 25);
-  gui.add(props, "ca", 0, 25);
-  gui.add(props, "lr", 0, 100);
-  gui.add(props, "la", 0, 100);
-  gui.add(props, "lc", 0, 25);
-  gui.add(props, "dt", 0, 1);
+  gui.remember(prey_props);
+  gui.add(prey_props, "play");
+  gui.add(prey_props, "alpha", 0, 10);
+  gui.add(prey_props, "beta", 0, 10);
+  gui.add(prey_props, "cr", 0, 25);
+  gui.add(prey_props, "ca", 0, 25);
+  gui.add(prey_props, "lr", 0, 100);
+  gui.add(prey_props, "la", 0, 100);
+  gui.add(prey_props, "lc", 0, 25);
+  gui.add(prey_props, "dt", 0, 1);
 
   // Handle the page resize.
   $(window).resize(function () {
@@ -67,7 +67,7 @@
   });
 
   // Fish element.
-  var Fish = function (x, y) {
+  var Fish = function (x, y, props) {
     this.x = x;
     this.y = y;
 
@@ -184,7 +184,7 @@
       var u = Math.random();
 
       if (u < probability) {
-        fish.push(new Fish(this.x, this.y));
+        fish.push(new Fish(this.x, this.y, props));
         console.log("Birth!");
       }
     }
@@ -204,20 +204,17 @@
   for (var i = 0; i < n; i += 1) {
     var randx = Math.random() * width;
     var randy = Math.random() * height;
-    fish.push(new Fish(randx, randy));
+    fish.push(new Fish(randx, randy, prey_props));
   }
 
   // Animation function.
   var animate = function () {
-    if (props.play === true) {
+    if (prey_props.play === true) {
 
       for (var i = 0; i < fish.length; i += 1) {
         fish[i].motion();
         fish[i].birthRate(0.0001);
         fish[i].deathRate(0.0001);
-
-        total_v += Math.sqrt(Math.pow(fish[i].vx, 2) +
-                             Math.pow(fish[i].vy, 2));
       }
 
     }
