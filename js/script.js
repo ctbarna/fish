@@ -2,7 +2,8 @@
 (function () {
   var height = $(window).height(), width = $(window).width();
   var paper = new Raphael(0, 0, width, height);
-  var n = 150;
+  var n = 75;
+  var n_pred = 15;
 
   // Helper method to generate a normally distributed random number.
   var randn = function (mean, variance) {
@@ -36,12 +37,26 @@
     beta: 1,
     cr: 25,
     ca: 15,
-    lr: 30,
-    la: 60,
+    lr: 20,
+    la: 35,
     lc: 8,
     dt: 0.5,
     velocity: 1,
     play: true
+  };
+
+  var pred_props = {
+    alpha: 0.5,
+    beta: 1,
+    cr: 70,
+    ca: 100,
+    lr: 15,
+    la: 100,
+    lc: 4,
+    dt: 0.5,
+    velocity: 2,
+    school: true,
+    color: "#000"
   };
 
   // Initialize dat.gui.
@@ -67,9 +82,12 @@
   });
 
   // Fish element.
-  var Fish = function (x, y, props) {
+  var Fish = function (x, y, props, member_of) {
     this.x = x;
     this.y = y;
+    this.props = props;
+
+    this.array = member_of;
 
     this.vx = randn();
     this.vy = randn();
@@ -79,9 +97,16 @@
 
     this.element = paper.circle(x, y, 5);
 
+    if (props.color !== undefined) {
+      this.element.attr('fill', props.color);
+    }
+
+    this.predators = [];
+    this.prey = [];
+
     this.remove = function () {
-      var index = fish.indexOf(this);
-      fish.splice(index, 1);
+      var index = this.array.indexOf(this);
+      this.array.splice(index, 1);
       this.element.remove();
     };
 
@@ -129,28 +154,30 @@
       this.ax = 0;
       this.ay = 0;
 
-      for (var i = 0; i < fish.length; i += 1) {
-        var d = Math.sqrt(Math.pow(this.x - fish[i].x, 2)
-          + Math.pow(this.y - fish[i].y, 2));
+      if (props.school !== false) {
+        for (var i = 0; i < this.array.length; i += 1) {
+          var d = Math.sqrt(Math.pow(this.x - this.array[i].x, 2)
+            + Math.pow(this.y - this.array[i].y, 2));
 
-        if (fish[i] !== this) {
-          this.ax = this.ax
-            + (props.cr * Math.exp(-d / props.lr)
-               * (-1 / (2 * props.lr))
-               * (1/d) * (2 * (this.x - fish[i].x)))
-            - (props.ca * Math.exp(-d / props.la)
-               * (-1 / (2 * props.la))
-               * (1/d) * (2 * (this.x - fish[i].x)));
-          fx = fx + fish[i].vx * Math.exp(-d / props.lc);
+          if (this.array[i] !== this) {
+            this.ax = this.ax
+              + (props.cr * Math.exp(-d / props.lr)
+                 * (-1 / (2 * props.lr))
+                 * (1/d) * (2 * (this.x - this.array[i].x)))
+              - (props.ca * Math.exp(-d / props.la)
+                 * (-1 / (2 * props.la))
+                 * (1/d) * (2 * (this.x - this.array[i].x)));
+            fx = fx + this.array[i].vx * Math.exp(-d / props.lc);
 
-          this.ay = this.ay
-            + (props.cr * Math.exp(-d / props.lr)
-               * (-1 / (2 * props.lr))
-               * (1/d) * (2 * (this.y - fish[i].y)))
-            - (props.ca * Math.exp(-d / props.la)
-               * (-1 / (2 * props.la))
-               * (1/d) * (2 * (this.y - fish[i].y)));
-          fy = fy + fish[i].vy * Math.exp(-d / props.lc);
+            this.ay = this.ay
+              + (props.cr * Math.exp(-d / props.lr)
+                 * (-1 / (2 * props.lr))
+                 * (1/d) * (2 * (this.y - this.array[i].y)))
+              - (props.ca * Math.exp(-d / props.la)
+                 * (-1 / (2 * props.la))
+                 * (1/d) * (2 * (this.y - this.array[i].y)));
+            fy = fy + this.array[i].vy * Math.exp(-d / props.lc);
+          }
         }
       }
 
@@ -171,6 +198,51 @@
           * (-1 / (2 * props.lr))
           * (1 / (height - this.y)) * (2 * (height - this.y)));
 
+      // Iterate over predators.
+      for (var i = 0; i < this.predators.length; i += 1) {
+        for (var j = 0; j < this.predators[i].length; j += 1) {
+          var current_predator = this.predators[i][j];
+          var d = Math.sqrt(Math.pow(this.x - current_predator.x, 2)
+            + Math.pow(this.y - current_predator.y, 2));
+
+          this.ax = this.ax
+            + (current_predator.props.cr * Math.exp(-d / current_predator.props.lr)
+               * (-1 / (2 * current_predator.props.lr))
+               * (1/d) * (2 * (this.x - current_predator.x)));
+
+          this.ay = this.ay
+            + (current_predator.props.cr * Math.exp(-d / current_predator.props.lr)
+               * (-1 / (2 * current_predator.props.lr))
+               * (1/d) * (2 * (this.y - current_predator.y)));
+        }
+      }
+
+      // Iterate over prey.
+      for (var i = 0; i < this.prey.length; i += 1) {
+        for (var j = 0; j < this.prey[i].length; j += 1) {
+          var current_prey = this.prey[i][j];
+          var d = Math.sqrt(Math.pow(this.x - current_prey.x, 2)
+            + Math.pow(this.y - current_prey.y, 2));
+          var la = current_prey.props.la * 2;
+          var ca = current_prey.props.ca * 8;
+
+          this.ax = this.ax
+            - (ca * Math.exp(-d / la)
+               * (-1 / (2 * la))
+               * (1/d) * (2 * (this.x - current_prey.x)));
+
+          this.ay = this.ay
+            - (ca * Math.exp(-d / la)
+               * (-1 / (2 * la))
+               * (1/d) * (2 * (this.y - current_prey.y)));
+
+          // Remove the prey!!!
+          if (d < 10) {
+            console.log("Kill!");
+            current_prey.remove();
+          }
+        }
+      }
 
       this.ax = props.alpha * fx - props.beta
         * this.vx - this.ax;
@@ -184,7 +256,7 @@
       var u = Math.random();
 
       if (u < probability) {
-        fish.push(new Fish(this.x, this.y, props));
+        this.array.push(new Fish(this.x, this.y, props, fish));
         console.log("Birth!");
       }
     }
@@ -197,14 +269,27 @@
         console.log("Death!");
       }
     }
+
   };
 
   window.fish = [];
+  window.predators = [];
+
+  for (var i = 0; i < n_pred; i += 1) {
+    var randx = Math.random() * width;
+    var randy = Math.random() * height;
+    predators.push(new Fish(randx, randy, pred_props, predators));
+  }
 
   for (var i = 0; i < n; i += 1) {
     var randx = Math.random() * width;
     var randy = Math.random() * height;
-    fish.push(new Fish(randx, randy, prey_props));
+    fish.push(new Fish(randx, randy, prey_props, fish));
+    fish[i].predators.push(predators);
+  }
+
+  for (var i = 0; i < n_pred; i += 1) {
+    predators[i].prey.push(fish);
   }
 
   // Animation function.
@@ -217,9 +302,13 @@
         fish[i].deathRate(0.0001);
       }
 
+      for (var i = 0; i < predators.length; i += 1) {
+        predators[i].motion();
+      }
+
     }
   }
 
-  var animationInterval = setInterval(animate, 10);
+  var animationInterval = setInterval(animate, 100);
 
 })();
