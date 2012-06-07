@@ -35,13 +35,15 @@
   var prey_props = {
     alpha: 0.5,
     beta: 1,
-    cr: 25,
-    ca: 15,
-    lr: 20,
-    la: 35,
+    cr: 30,
+    ca: 25,
+    lr: 25,
+    la: 40,
     lc: 8,
     dt: 0.5,
     velocity: 1,
+    birth_rate: 0.002,
+    death_rate: 0.001,
     play: true
   };
 
@@ -52,25 +54,36 @@
     ca: 100,
     lr: 15,
     la: 100,
-    lc: 4,
+    lc: 10,
     dt: 0.5,
     velocity: 2,
     school: true,
-    color: "#000"
+    starvation: true,
+    min_pop: 3,
+    birth_rate: 0.002,
+    starve_rate: 150,
+    color: "#000",
+    play: true
   };
 
   // Initialize dat.gui.
   var gui = new dat.GUI();
-  gui.remember(prey_props);
-  gui.add(prey_props, "play");
-  gui.add(prey_props, "alpha", 0, 10);
-  gui.add(prey_props, "beta", 0, 10);
-  gui.add(prey_props, "cr", 0, 25);
-  gui.add(prey_props, "ca", 0, 25);
-  gui.add(prey_props, "lr", 0, 100);
-  gui.add(prey_props, "la", 0, 100);
-  gui.add(prey_props, "lc", 0, 25);
-  gui.add(prey_props, "dt", 0, 1);
+  // gui.remember(prey_props);
+  // gui.remember(pred_props);
+
+  var prey_folder = gui.addFolder("Prey");
+  prey_folder.add(prey_props, "play");
+  prey_folder.add(prey_props, "dt", 0, 1);
+  prey_folder.add(prey_props, "birth_rate");
+  prey_folder.add(prey_props, "death_rate");
+  prey_folder.open();
+
+  var pred_folder = gui.addFolder("Predators");
+  pred_folder.add(pred_props, "play");
+  pred_folder.add(pred_props, "dt", 0, 1);
+  pred_folder.add(pred_props, "birth_rate");
+  pred_folder.add(pred_props, "starve_rate");
+  pred_folder.open();
 
   // Handle the page resize.
   $(window).resize(function () {
@@ -87,13 +100,17 @@
     this.y = y;
     this.props = props;
 
-    this.array = member_of;
+    this.array = window[member_of];
 
     this.vx = randn();
     this.vy = randn();
 
     this.ax = randn() * 0.001;
     this.ay = randn() * 0.001;
+
+    if (props.starvation === true) {
+      this.last_meal = 0;
+    }
 
     this.element = paper.circle(x, y, 5);
 
@@ -146,6 +163,11 @@
       }
 
       this.adjustVelocity();
+
+      if ((props.starvation === true) && (this.last_meal > props.starve_rate) && (this.array.length >= props.min_pop)) {
+        console.log("Starvation!");
+        this.remove();
+      }
     };
 
     this.adjustVelocity = function () {
@@ -240,8 +262,16 @@
           if (d < 10) {
             console.log("Kill!");
             current_prey.remove();
+
+            if (typeof(this.last_meal) === "number") {
+              this.last_meal = 0;
+            }
           }
         }
+      }
+
+      if (typeof(this.last_meal) === "number") {
+        this.last_meal = this.last_meal + props.dt;
       }
 
       this.ax = props.alpha * fx - props.beta
@@ -256,7 +286,7 @@
       var u = Math.random();
 
       if (u < probability) {
-        this.array.push(new Fish(this.x, this.y, props, fish));
+        this.array.push(new Fish(this.x, this.y, props, member_of));
         console.log("Birth!");
       }
     }
@@ -278,13 +308,13 @@
   for (var i = 0; i < n_pred; i += 1) {
     var randx = Math.random() * width;
     var randy = Math.random() * height;
-    predators.push(new Fish(randx, randy, pred_props, predators));
+    predators.push(new Fish(randx, randy, pred_props, 'predators'));
   }
 
   for (var i = 0; i < n; i += 1) {
     var randx = Math.random() * width;
     var randy = Math.random() * height;
-    fish.push(new Fish(randx, randy, prey_props, fish));
+    fish.push(new Fish(randx, randy, prey_props, 'fish'));
     fish[i].predators.push(predators);
   }
 
@@ -295,17 +325,19 @@
   // Animation function.
   var animate = function () {
     if (prey_props.play === true) {
-
       for (var i = 0; i < fish.length; i += 1) {
         fish[i].motion();
-        fish[i].birthRate(0.0001);
-        fish[i].deathRate(0.0001);
+        fish[i].birthRate(prey_props.birth_rate);
+        fish[i].deathRate(prey_props.death_rate);
+        fish[i].predators = [predators]
       }
-
+    }
+    if (pred_props.play === true) {
       for (var i = 0; i < predators.length; i += 1) {
         predators[i].motion();
+        predators[i].birthRate(pred_props.birth_rate);
+        predators[i].prey = [fish];
       }
-
     }
   }
 
